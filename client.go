@@ -16,8 +16,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
-// Client bundles data needed by methods in order to interact with the casdoor API
-type Client struct {
+// client bundles data needed by methods in order to interact with the casdoor API
+type client struct {
 	client         *http.Client
 	configurations Config
 }
@@ -42,7 +42,7 @@ func (c *Config) Validate() error {
 }
 
 // NewClient creates a new authutils client
-func NewClient(config Config) (*Client, error) {
+func NewClient(config Config) (*client, error) {
 	err := config.Validate()
 	if err != nil {
 		fields := ""
@@ -53,7 +53,7 @@ func NewClient(config Config) (*Client, error) {
 		return nil, err
 	}
 
-	client := Client{
+	client := client{
 		client: &http.Client{},
 		configurations: Config{
 			CasdoorEndpoint:     config.CasdoorEndpoint,
@@ -77,7 +77,7 @@ func NewClient(config Config) (*Client, error) {
 }
 
 // makeRequest is a helper function for making http requests
-func (c *Client) makeRequest(
+func (c *client) makeRequest(
 	ctx context.Context,
 	method string,
 	path string,
@@ -115,7 +115,7 @@ func (c *Client) makeRequest(
 
 // Login uses the "Resource Owner Password Credentials Grant" to authenticate a user and returns an
 // access token in the response
-func (c *Client) Login(ctx context.Context, username, password string) (*LoginResponse, error) {
+func (c *client) Login(ctx context.Context, username, password string) (*LoginResponse, error) {
 	loginEndpoint := fmt.Sprintf("%s/api/login/oauth/access_token", c.configurations.CasdoorEndpoint)
 	payload := LoginPayload{
 		GrantType:    "password",
@@ -155,7 +155,7 @@ func (c *Client) Login(ctx context.Context, username, password string) (*LoginRe
 }
 
 // AddUser creates a user in casdoor
-func (c *Client) AddUser(ctx context.Context, user *casdoorsdk.User) (bool, error) {
+func (c *client) AddUser(ctx context.Context, user *casdoorsdk.User) (bool, error) {
 	addUserEndpoint := fmt.Sprintf("%s/api/add-user", c.configurations.CasdoorEndpoint)
 	response, err := c.makeRequest(ctx, http.MethodPost, addUserEndpoint, user, true, "application/json")
 	if err != nil {
@@ -185,7 +185,7 @@ func (c *Client) AddUser(ctx context.Context, user *casdoorsdk.User) (bool, erro
 
 // VerifyAccessToken is used to introspect a token to determine the active state of the
 // OAuth 2.0 access token and to determine meta-information about this token.
-func (c *Client) VerifyAccessToken(ctx context.Context, accessToken string) (*TokenIntrospectionResponse, error) {
+func (c *client) VerifyAccessToken(ctx context.Context, accessToken string) (*TokenIntrospectionResponse, error) {
 	introspectionEndpoint := fmt.Sprintf("%s/api/login/oauth/introspect", c.configurations.CasdoorEndpoint)
 	formData := url.Values{}
 	formData.Add("token", accessToken)
@@ -205,20 +205,20 @@ func (c *Client) VerifyAccessToken(ctx context.Context, accessToken string) (*To
 	}
 
 	if !introspectionResponse.Active {
-		return nil, fmt.Errorf("the supplied access token is not valid")
+		return nil, fmt.Errorf("the supplied access token is invalid")
 	}
 
 	return introspectionResponse, nil
 }
 
 // RefreshToken is used ti update an access token
-func (c *Client) RefreshToken(ctx context.Context, token string) (*oauth2.Token, error) {
+func (c *client) RefreshToken(ctx context.Context, token string) (*oauth2.Token, error) {
 	return casdoorsdk.RefreshOAuthToken(token)
 }
 
 // hasValidCasdoorBearerToken returns true with no errors if the request has a valid bearer token in the authorization header.
 // Otherwise, it returns false and the error in a map with the key "error"
-func (c *Client) hasValidCasdoorBearerToken(ctx context.Context, r *http.Request) (bool, map[string]string, *TokenIntrospectionResponse) {
+func (c *client) hasValidCasdoorBearerToken(ctx context.Context, r *http.Request) (bool, map[string]string, *TokenIntrospectionResponse) {
 	bearerToken, err := firebasetools.ExtractBearerToken(r)
 	if err != nil {
 		// this error here will only be returned to the user if all the verification functions in the chain fail

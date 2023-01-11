@@ -19,7 +19,7 @@ type authCheckFn = func(
 // CasdoorAuthenticationMiddleware is responsible for validating user's authentication credentials before allowing access to protected routes.
 // It uses the provided authentication service to check the user's token
 // and ensure it is valid and has the necessary permissions for the requested resource
-func CasdoorAuthenticationMiddleware(c Client) func(http.Handler) http.Handler {
+func CasdoorAuthenticationMiddleware(c client) func(http.Handler) http.Handler {
 	// multiple checks will be run in sequence (order matters)
 	// the first check to succeed will call `c.Next()` and `return`
 	// this means that more permissive checks (e.g exceptions) should come first
