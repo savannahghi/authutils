@@ -1,0 +1,41 @@
+# Options for analysis running.
+run:
+  linters:
+    disable-all: true
+    enable:
+      - deadcode
+      - errcheck
+      - gosimple
+      - govet
+      - ineffassign
+      - staticcheck
+      - structcheck
+      - typecheck
+      - unused
+      - varcheck
+      - asciicheck
+      - bodyclose
+      - dogsled
+      - exhaustive
+      - exportloopref
+      - gocognit
+      - goconst
+      - gofmt
+      - goheader
+      - goimports
+      - gosec
+      - misspell
+      - nakedret
+      - nestif
+      - noctx
+      - rowserrcheck
+      - sqlclosecheck
+      - unconvert
+      - unparam
+      - whitespace
+      - gocyclo
+      - golint
+
+  linters-settings:
+    staticcheck:
+      checks: ["all"]
