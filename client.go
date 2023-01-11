@@ -25,7 +25,7 @@ type Client struct {
 // Config holds the necessary authentication configurations for interacting with the casdoor service
 type Config struct {
 	CasdoorEndpoint     string `json:"endpoint"`
-	ClientId            string `json:"client_id"`
+	ClientID            string `json:"client_id"`
 	ClientSecret        string `json:"client_secret"`
 	CasdoorOrganization string `json:"organization"`
 	CasdoorApplication  string `json:"application"`
@@ -57,7 +57,7 @@ func NewClient(config Config) (*Client, error) {
 		client: &http.Client{},
 		configurations: Config{
 			CasdoorEndpoint:     config.CasdoorEndpoint,
-			ClientId:            config.ClientId,
+			ClientID:            config.ClientID,
 			ClientSecret:        config.ClientSecret,
 			CasdoorOrganization: config.CasdoorOrganization,
 			CasdoorApplication:  config.CasdoorApplication,
@@ -66,7 +66,7 @@ func NewClient(config Config) (*Client, error) {
 
 	casdoorsdk.InitConfig(
 		config.CasdoorEndpoint,
-		config.ClientId,
+		config.ClientID,
 		config.ClientSecret,
 		config.Certificate,
 		config.CasdoorOrganization,
@@ -99,7 +99,7 @@ func (c *Client) makeRequest(
 	}
 
 	if isAuthorized {
-		req.SetBasicAuth(c.configurations.ClientId, c.configurations.ClientSecret)
+		req.SetBasicAuth(c.configurations.ClientID, c.configurations.ClientSecret)
 	}
 
 	req.Header.Set("Accept", "application/json")
@@ -119,7 +119,7 @@ func (c *Client) Login(ctx context.Context, username, password string) (*LoginRe
 	loginEndpoint := fmt.Sprintf("%s/api/login/oauth/access_token", c.configurations.CasdoorEndpoint)
 	payload := LoginPayload{
 		GrantType:    "password",
-		ClientID:     c.configurations.ClientId,
+		ClientID:     c.configurations.ClientID,
 		ClientSecret: c.configurations.ClientSecret,
 		Username:     username,
 		Password:     password,
