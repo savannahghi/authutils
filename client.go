@@ -205,7 +205,7 @@ func (c *Client) VerifyAccessToken(ctx context.Context, accessToken string) (*To
 	}
 
 	if !introspectionResponse.Active {
-		return nil, fmt.Errorf("the supplied access token is not valid")
+		return nil, fmt.Errorf("the supplied access token is invalid")
 	}
 
 	return introspectionResponse, nil
