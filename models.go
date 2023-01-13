@@ -39,3 +39,13 @@ type TokenIntrospectionResponse struct {
 	Iss       string   `json:"iss"`
 	Jti       string   `json:"jti"`
 }
+
+// Response defines the JSON object returned by most casdoor APIs
+type Response struct {
+	Status string      `json:"status"`
+	Msg    string      `json:"msg"`
+	Sub    string      `json:"sub"`
+	Name   string      `json:"name"`
+	Data   interface{} `json:"data"`
+	Data2  interface{} `json:"data2"`
+}

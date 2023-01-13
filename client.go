@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"net/url"
 
@@ -211,7 +212,7 @@ func (c *Client) VerifyAccessToken(ctx context.Context, accessToken string) (*To
 	return introspectionResponse, nil
 }
 
-// RefreshToken is used ti update an access token
+// RefreshToken is used to update an access token
 func (c *Client) RefreshToken(ctx context.Context, token string) (*oauth2.Token, error) {
 	return casdoorsdk.RefreshOAuthToken(token)
 }
@@ -224,7 +225,6 @@ func (c *Client) hasValidCasdoorBearerToken(ctx context.Context, r *http.Request
 		// this error here will only be returned to the user if all the verification functions in the chain fail
 		return false, serverutils.ErrorMap(err), nil
 	}
-	fmt.Println(bearerToken)
 
 	validToken, err := c.VerifyAccessToken(ctx, bearerToken)
 	if err != nil {
@@ -232,6 +232,35 @@ func (c *Client) hasValidCasdoorBearerToken(ctx context.Context, r *http.Request
 	}
 
 	return true, nil, validToken
+}
+
+// SetUserPassword assigns a user a new password
+func (c *Client) SetUserPassword(ctx context.Context, userName, oldPassword, newPassword string) (*Response, error) {
+	setUserPasswordEndpoint := fmt.Sprintf("%s/api/set-password", c.configurations.CasdoorEndpoint)
+	payload := &bytes.Buffer{}
+	writer := multipart.NewWriter(payload)
+	_ = writer.WriteField("userOwner", c.configurations.CasdoorOrganization)
+	_ = writer.WriteField("userName", userName)
+	_ = writer.WriteField("oldPassword", oldPassword)
+	_ = writer.WriteField("newPassword", newPassword)
+	err := writer.Close()
+	if err != nil {
+		fmt.Println(err)
+		return nil, nil
+	}
+
+	resp, err := casdoorsdk.DoPostBytesRaw(setUserPasswordEndpoint, writer.FormDataContentType(), payload)
+	if err != nil {
+		return nil, err
+	}
+
+	var EndpointResponse *Response
+	err = json.Unmarshal(resp, &EndpointResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return EndpointResponse, nil
 }
 
 // TODO: add update user, get user methods
