@@ -25,5 +25,5 @@ func GetLoggedInUserUID(ctx context.Context) (string, error) {
 		return "", fmt.Errorf("wrong auth token type, got %v", token)
 	}
 
-	return token.Sub, nil
+	return token.UserGUID, nil
 }
