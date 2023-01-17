@@ -2,12 +2,11 @@ package authutils
 
 // LoginResponse defines the object returned when a user successfully logs in
 type LoginResponse struct {
+	Scope        string `json:"scope"`
+	ExpiresIn    int    `json:"expires_in"`
 	AccessToken  string `json:"access_token"`
-	IDToken      string `json:"id_token"`
 	RefreshToken string `json:"refresh_token"`
 	TokenType    string `json:"token_type"`
-	ExpiresIn    int    `json:"expires_in"`
-	Scope        string `json:"scope"`
 }
 
 // LoginPayload defines the payload passed when logging in to casdoor
