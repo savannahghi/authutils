@@ -12,16 +12,18 @@ import (
 	"time"
 
 	"github.com/go-playground/validator"
+	"github.com/savannahghi/firebasetools"
+	"github.com/savannahghi/serverutils"
 	"moul.io/http2curl"
 )
 
-// Client bundles data needed by methods in order to interact with the casdoor API
+// Client bundles data needed by methods in order to interact with the slade360 auth server API
 type Client struct {
 	client         *http.Client
 	configurations Config
 }
 
-// Config holds the necessary authentication configurations for interacting with the casdoor service
+// Config holds the necessary authentication configurations for interacting with the slade360 auth server service
 type Config struct {
 	AuthServerEndpoint string `json:"authServerEndpoint"`
 	ClientID           string `json:"client_id"`
@@ -105,9 +107,9 @@ func (c *Client) Authenticate() error {
 	return nil
 }
 
-// VerifyAccessToken is used to introspect a token to determine the active state of the
+// verifyAccessToken is used to introspect a token to determine the active state of the
 // OAuth 2.0 access token and to determine meta-information about this token.
-func (c *Client) VerifyAccessToken(ctx context.Context, accessToken string) (*TokenIntrospectionResponse, error) {
+func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*TokenIntrospectionResponse, error) {
 	if accessToken == "" {
 		return nil, fmt.Errorf("unable to get access token from the input")
 	}
@@ -139,6 +141,23 @@ func (c *Client) VerifyAccessToken(ctx context.Context, accessToken string) (*To
 	}
 
 	return introspectionResponse, nil
+}
+
+// hasValidSlade360BearerToken returns true with no errors if the request has a valid bearer token in the authorization header.
+// Otherwise, it returns false and the error in a map with the key "error"
+func (c *Client) hasValidSlade360BearerToken(ctx context.Context, r *http.Request) (bool, map[string]string, *TokenIntrospectionResponse) {
+	bearerToken, err := firebasetools.ExtractBearerToken(r)
+	if err != nil {
+		// this error here will only be returned to the user if all the verification functions in the chain fail
+		return false, serverutils.ErrorMap(err), nil
+	}
+
+	validToken, err := c.verifyAccessToken(ctx, bearerToken)
+	if err != nil {
+		return false, serverutils.ErrorMap(err), nil
+	}
+
+	return true, nil, validToken
 }
 
 // makeRequest is a helper function for making http requests

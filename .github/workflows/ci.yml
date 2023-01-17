@@ -26,12 +26,12 @@ jobs:
       - name: Install Go dependencies
         run: |
           curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.37.1
-          go get -u github.com/kisielk/errcheck
+          go install github.com/kisielk/errcheck@latest
           go get -u golang.org/x/lint/golint
-          go get -u honnef.co/go/tools/cmd/staticcheck
-          go get -u github.com/axw/gocov/gocov
-          go get -u github.com/securego/gosec/cmd/gosec
-          go get -u github.com/ory/go-acc
+          go install honnef.co/go/tools/cmd/staticcheck@2022.1
+          go install github.com/axw/gocov/gocov@latest
+          go install github.com/securego/gosec/v2/cmd/gosec@latest
+          go install github.com/ory/go-acc@latest
           go get -u github.com/client9/misspell/cmd/misspell
           go get -u github.com/gordonklaus/ineffassign
           go get github.com/fzipp/gocyclo
@@ -40,6 +40,8 @@ jobs:
           go get google.golang.org/grpc@v1.38.0
           go get google.golang.org/grpc/balancer/grpclb@v1.38.0
           go get google.golang.org/api/support/bundler@v0.48.0
+          go get contrib.go.opencensus.io/exporter/stackdriver@v0.13.6
+          go get github.com/savannahghi/firebasetools
 
       - name: Run lint and test
         run: |
