@@ -114,6 +114,10 @@ func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*To
 		return nil, fmt.Errorf("unable to get access token from the input")
 	}
 
+	if len(accessToken) > 256 {
+		return nil, fmt.Errorf("ensure the token has no more than 255 characters")
+	}
+
 	introspectionURL := fmt.Sprintf("%s/v1/app/introspect/", c.configurations.AuthServerEndpoint)
 	payload := TokenIntrospectionPayload{
 		TokenType: "access_token",
