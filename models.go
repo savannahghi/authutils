@@ -1,5 +1,7 @@
 package authutils
 
+import "time"
+
 // LoginResponse defines the object returned when a user successfully logs in
 type LoginResponse struct {
 	Scope        string `json:"scope"`
@@ -26,17 +28,12 @@ type CasdoorErrorResponse struct {
 
 // TokenIntrospectionResponse defines the JSON object returned by the CASDOOR service during token introspection
 type TokenIntrospectionResponse struct {
-	Active    bool     `json:"active"`
-	ClientID  string   `json:"client_id"`
-	Username  string   `json:"username"`
-	TokenType string   `json:"token_type"`
-	Exp       int      `json:"exp"`
-	Iat       int      `json:"iat"`
-	Nbf       int      `json:"nbf"`
-	Sub       string   `json:"sub"`
-	Aud       []string `json:"aud"`
-	Iss       string   `json:"iss"`
-	Jti       string   `json:"jti"`
+	ClientID string    `json:"client_id"`
+	Expires  time.Time `json:"expires"`
+	IsValid  bool      `json:"is_valid"`
+	Scope    string    `json:"scope"`
+	Token    string    `json:"token"`
+	UserGUID string    `json:"user_guid"`
 }
 
 // Response defines the JSON object returned by most casdoor APIs
@@ -47,4 +44,10 @@ type Response struct {
 	Name   string      `json:"name"`
 	Data   interface{} `json:"data"`
 	Data2  interface{} `json:"data2"`
+}
+
+// TokenIntrospectionPayload defines the json object passed when introspecting a token
+type TokenIntrospectionPayload struct {
+	TokenType string `json:"token_type"`
+	Token     string `json:"token"`
 }

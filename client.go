@@ -1,6 +1,8 @@
 package authutils
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +12,7 @@ import (
 	"time"
 
 	"github.com/go-playground/validator"
+	"moul.io/http2curl"
 )
 
 // Client bundles data needed by methods in order to interact with the casdoor API
@@ -100,4 +103,75 @@ func (c *Client) Authenticate() error {
 	}
 
 	return nil
+}
+
+// VerifyAccessToken is used to introspect a token to determine the active state of the
+// OAuth 2.0 access token and to determine meta-information about this token.
+func (c *Client) VerifyAccessToken(ctx context.Context, accessToken string) (*TokenIntrospectionResponse, error) {
+	if accessToken == "" {
+		return nil, fmt.Errorf("unable to get access token from the input")
+	}
+
+	introspectionURL := fmt.Sprintf("%s/v1/app/introspect/", c.configurations.AuthServerEndpoint)
+	payload := TokenIntrospectionPayload{
+		TokenType: "access_token",
+		Token:     accessToken,
+	}
+
+	response, err := c.makeRequest(ctx, http.MethodPost, introspectionURL, payload, "application/json")
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	var introspectionResponse *TokenIntrospectionResponse
+	err = json.Unmarshal(resp, &introspectionResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	if !introspectionResponse.IsValid {
+		return nil, fmt.Errorf("the supplied access token is invalid")
+	}
+
+	return introspectionResponse, nil
+}
+
+// makeRequest is a helper function for making http requests
+func (c *Client) makeRequest(
+	ctx context.Context,
+	method string,
+	path string,
+	body interface{},
+	contentType string,
+) (*http.Response, error) {
+	client := http.Client{}
+
+	encoded, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+
+	payload := bytes.NewBuffer(encoded)
+	req, err := http.NewRequestWithContext(ctx, method, path, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", contentType)
+
+	command, _ := http2curl.GetCurlCommand(req)
+	fmt.Println(command)
+
+	response, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("an error occurred while sending a HTTP request: %w", err)
+	}
+
+	return response, nil
 }
