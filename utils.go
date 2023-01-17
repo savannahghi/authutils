@@ -3,15 +3,21 @@ package authutils
 import (
 	"context"
 	"fmt"
+)
 
-	"github.com/savannahghi/firebasetools"
+// ContextKey is used as a type for the UID key for the auth server token on context.Context.
+type ContextKey string
+
+const (
+	// AuthTokenContextKey is used to add/retrieve the Firebase UID on the context
+	AuthTokenContextKey = ContextKey("UID")
 )
 
 // GetLoggedInUserUID returns user information as part of OIDC protocol.
 func GetLoggedInUserUID(ctx context.Context) (string, error) {
-	val := ctx.Value(firebasetools.AuthTokenContextKey)
+	val := ctx.Value("UID")
 	if val == nil {
-		return "", fmt.Errorf("unable to get auth token from context with key: %s", firebasetools.AuthTokenContextKey)
+		return "", fmt.Errorf("unable to get auth token from context with key: %s", AuthTokenContextKey)
 	}
 
 	token, ok := val.(*TokenIntrospectionResponse)
