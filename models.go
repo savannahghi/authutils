@@ -2,8 +2,8 @@ package authutils
 
 import "time"
 
-// LoginResponse defines the object returned when a user successfully logs in
-type LoginResponse struct {
+// OAUTHResponse defines the object returned when a user successfully logs in
+type OAUTHResponse struct {
 	Scope        string `json:"scope"`
 	ExpiresIn    int    `json:"expires_in"`
 	AccessToken  string `json:"access_token"`
