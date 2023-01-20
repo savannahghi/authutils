@@ -68,7 +68,7 @@ func NewClient(config Config) (*Client, error) {
 		},
 	}
 
-	err = client.Authenticate()
+	_, err = client.Authenticate()
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize server client: %w", err)
 	}
@@ -77,7 +77,7 @@ func NewClient(config Config) (*Client, error) {
 }
 
 // Authenticate uses client credentials to log in to a slade360 authentication server
-func (c *Client) Authenticate() error {
+func (c *Client) Authenticate() (*LoginResponse, error) {
 	apiTokenURL := fmt.Sprintf("%s/oauth2/token/", c.configurations.AuthServerEndpoint)
 	credentials := url.Values{}
 	credentials.Set("client_id", c.configurations.ClientID)
@@ -90,21 +90,51 @@ func (c *Client) Authenticate() error {
 
 	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	var responseData LoginResponse
 	err = json.Unmarshal(data, &responseData)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	return nil
+	return &responseData, nil
+}
+
+// CreateUser creates a user on slade360 auth server
+func (c *Client) CreateUser(ctx context.Context, input *CreateUserPayload) (*CreateUserResponse, error) {
+	createUserEndpoint := fmt.Sprintf("%s/v1/user/user_roles/", c.configurations.AuthServerEndpoint)
+	response, err := c.makeRequest(ctx, http.MethodPost, createUserEndpoint, input, "application/json", true)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(response.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if response.StatusCode >= 300 || response.StatusCode < 200 {
+		msg := fmt.Sprintf(
+			"error from create user endpoint, status %d and error: %s",
+			response.StatusCode, string(data),
+		)
+		return nil, fmt.Errorf(msg)
+	}
+
+	var dataResponse *CreateUserResponse
+	err = json.Unmarshal(data, &dataResponse)
+	if err != nil {
+		return nil, err
+	}
+
+	return dataResponse, nil
 }
 
 // verifyAccessToken is used to introspect a token to determine the active state of the
@@ -124,7 +154,7 @@ func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*To
 		Token:     accessToken,
 	}
 
-	response, err := c.makeRequest(ctx, http.MethodPost, introspectionURL, payload, "application/json")
+	response, err := c.makeRequest(ctx, http.MethodPost, introspectionURL, payload, "application/json", false)
 	if err != nil {
 		return nil, err
 	}
@@ -171,6 +201,7 @@ func (c *Client) makeRequest(
 	path string,
 	body interface{},
 	contentType string,
+	isAuthenticated bool,
 ) (*http.Response, error) {
 	client := http.Client{}
 
@@ -185,6 +216,15 @@ func (c *Client) makeRequest(
 		return nil, err
 	}
 
+	if isAuthenticated {
+		loginCreds, err := c.Authenticate()
+		if err != nil {
+			return nil, err
+		}
+		token := fmt.Sprintf("Bearer %s", loginCreds.AccessToken)
+
+		req.Header.Set("Authorization", token)
+	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", contentType)
 
