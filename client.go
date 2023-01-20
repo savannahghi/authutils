@@ -77,7 +77,7 @@ func NewClient(config Config) (*Client, error) {
 }
 
 // Authenticate uses client credentials to log in to a slade360 authentication server
-func (c *Client) Authenticate() (*LoginResponse, error) {
+func (c *Client) Authenticate() (*OAUTHResponse, error) {
 	apiTokenURL := fmt.Sprintf("%s/oauth2/token/", c.configurations.AuthServerEndpoint)
 	credentials := url.Values{}
 	credentials.Set("client_id", c.configurations.ClientID)
@@ -93,18 +93,12 @@ func (c *Client) Authenticate() (*LoginResponse, error) {
 		return nil, err
 	}
 
-	data, err := io.ReadAll(response.Body)
+	responseData, err := decodeOauthResponse(response)
 	if err != nil {
 		return nil, err
 	}
 
-	var responseData LoginResponse
-	err = json.Unmarshal(data, &responseData)
-	if err != nil {
-		return nil, err
-	}
-
-	return &responseData, nil
+	return responseData, nil
 }
 
 // CreateUser creates a user on slade360 auth server
@@ -135,6 +129,34 @@ func (c *Client) CreateUser(ctx context.Context, input *CreateUserPayload) (*Cre
 	}
 
 	return dataResponse, nil
+}
+
+// RefreshToken uses the refresh token to obtain a fresh access token
+func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*OAUTHResponse, error) {
+	if refreshToken == "" {
+		return nil, fmt.Errorf("unable to get access token from the input")
+	}
+
+	apiTokenURL := fmt.Sprintf("%s/oauth2/token/", c.configurations.AuthServerEndpoint)
+	credentials := url.Values{}
+	credentials.Set("client_id", c.configurations.ClientID)
+	credentials.Set("client_secret", c.configurations.ClientSecret)
+	credentials.Set("grant_type", "refresh_token")
+	credentials.Set("refresh_token", refreshToken)
+
+	encodedCredentials := strings.NewReader(credentials.Encode())
+
+	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials)
+	if err != nil {
+		return nil, err
+	}
+
+	responseData, err := decodeOauthResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return responseData, nil
 }
 
 // verifyAccessToken is used to introspect a token to determine the active state of the
