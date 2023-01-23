@@ -18,17 +18,27 @@ const (
 
 // GetLoggedInUserUID returns user information as part of OIDC protocol.
 func GetLoggedInUserUID(ctx context.Context) (string, error) {
-	val := ctx.Value("UID")
+	authToken, err := GetUserTokenFromContext(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	return authToken.UserGUID, nil
+}
+
+// GetUserTokenFromContext retrieves a slade360 token from the supplied context
+func GetUserTokenFromContext(ctx context.Context) (*TokenIntrospectionResponse, error) {
+	val := ctx.Value(AuthTokenContextKey)
 	if val == nil {
-		return "", fmt.Errorf("unable to get auth token from context with key: %s", AuthTokenContextKey)
+		return nil, fmt.Errorf(
+			"unable to get auth token from context with key %#v", AuthTokenContextKey)
 	}
 
 	token, ok := val.(*TokenIntrospectionResponse)
 	if !ok {
-		return "", fmt.Errorf("wrong auth token type, got %v", token)
+		return nil, fmt.Errorf("wrong auth token type, got %#v, expected a slade 360 auth token", val)
 	}
-
-	return token.UserGUID, nil
+	return token, nil
 }
 
 // decodeOauthResponse extracts the OAUTH data from the passed response body. It is used when generating or refreshing an access token
