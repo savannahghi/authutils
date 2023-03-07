@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/savannahghi/serverutils"
 )
 
@@ -49,5 +50,29 @@ func SladeAuthenticationMiddleware(c Client) func(http.Handler) http.Handler {
 				serverutils.WriteJSONResponse(w, errs, http.StatusUnauthorized)
 			},
 		)
+	}
+}
+
+// SladeAuthenticationGinMiddleware is an authentication middleware for servers using Gin. It checks the user token and ensures
+// that it is valid
+func SladeAuthenticationGinMiddleware(c Client) gin.HandlerFunc {
+	checkFuncs := []authCheckFn{c.hasValidSlade360BearerToken}
+	return func(c *gin.Context) {
+		errs := []map[string]string{}
+
+		for _, checkFunc := range checkFuncs {
+			shouldContinue, errMap, authToken := checkFunc(c.Request.Context(), c.Request)
+
+			if shouldContinue {
+				ctx := context.WithValue(c.Request.Context(), AuthTokenContextKey, authToken)
+				c.Request = c.Request.WithContext(ctx)
+				c.Next()
+				return
+			}
+
+			errs = append(errs, errMap)
+		}
+
+		serverutils.WriteJSONResponse(c.Writer, errs, http.StatusUnauthorized)
 	}
 }
