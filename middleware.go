@@ -55,8 +55,8 @@ func SladeAuthenticationMiddleware(c Client) func(http.Handler) http.Handler {
 
 // SladeAuthenticationGinMiddleware is an authentication middleware for servers using Gin. It checks the user token and ensures
 // that it is valid
-func SladeAuthenticationGinMiddleware(c Client) gin.HandlerFunc {
-	checkFuncs := []authCheckFn{c.hasValidSlade360BearerToken}
+func SladeAuthenticationGinMiddleware(cl Client) gin.HandlerFunc {
+	checkFuncs := []authCheckFn{cl.hasValidSlade360BearerToken}
 	return func(c *gin.Context) {
 		errs := []map[string]string{}
 
@@ -74,5 +74,6 @@ func SladeAuthenticationGinMiddleware(c Client) gin.HandlerFunc {
 		}
 
 		serverutils.WriteJSONResponse(c.Writer, errs, http.StatusUnauthorized)
+		c.Abort()
 	}
 }
