@@ -23,7 +23,7 @@ func SladeAuthenticationMiddleware(c Client) func(http.Handler) http.Handler {
 	// multiple checks will be run in sequence (order matters)
 	// the first check to succeed will call `c.Next()` and `return`
 	// this means that more permissive checks (e.g exceptions) should come first
-	checkFuncs := []authCheckFn{c.hasValidSlade360BearerToken}
+	checkFuncs := []authCheckFn{c.HasValidSlade360BearerToken}
 
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(
@@ -56,7 +56,7 @@ func SladeAuthenticationMiddleware(c Client) func(http.Handler) http.Handler {
 // SladeAuthenticationGinMiddleware is an authentication middleware for servers using Gin. It checks the user token and ensures
 // that it is valid
 func SladeAuthenticationGinMiddleware(cl Client) gin.HandlerFunc {
-	checkFuncs := []authCheckFn{cl.hasValidSlade360BearerToken}
+	checkFuncs := []authCheckFn{cl.HasValidSlade360BearerToken}
 	return func(c *gin.Context) {
 		errs := []map[string]string{}
 
