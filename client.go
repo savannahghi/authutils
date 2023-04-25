@@ -199,9 +199,9 @@ func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*To
 	return introspectionResponse, nil
 }
 
-// hasValidSlade360BearerToken returns true with no errors if the request has a valid bearer token in the authorization header.
+// HasValidSlade360BearerToken returns true with no errors if the request has a valid bearer token in the authorization header.
 // Otherwise, it returns false and the error in a map with the key "error"
-func (c *Client) hasValidSlade360BearerToken(ctx context.Context, r *http.Request) (bool, map[string]string, *TokenIntrospectionResponse) {
+func (c *Client) HasValidSlade360BearerToken(ctx context.Context, r *http.Request) (bool, map[string]string, *TokenIntrospectionResponse) {
 	bearerToken, err := firebasetools.ExtractBearerToken(r)
 	if err != nil {
 		// this error here will only be returned to the user if all the verification functions in the chain fail
