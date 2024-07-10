@@ -7,6 +7,7 @@ require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/savannahghi/firebasetools v0.0.19
 	github.com/savannahghi/serverutils v0.0.7
+	gopkg.in/go-playground/validator.v9 v9.31.0
 	moul.io/http2curl v1.0.0
 )
 

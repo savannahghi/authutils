@@ -159,6 +159,37 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*OAUTHR
 	return responseData, nil
 }
 
+// LoginUser logs in a user on slade360 auth server using their email and password
+func (c *Client) LoginUser(ctx context.Context, input *LoginUserPayload) (*OAUTHResponse, error) {
+	err := input.Validate()
+	if err != nil {
+		return nil, err
+	}
+
+	apiTokenURL := fmt.Sprintf("%s/oauth2/token/", c.configurations.AuthServerEndpoint)
+
+	credentials := url.Values{}
+	credentials.Set("client_id", c.configurations.ClientID)
+	credentials.Set("client_secret", c.configurations.ClientSecret)
+	credentials.Set("grant_type", c.configurations.GrantType)
+	credentials.Set("username", input.Email)
+	credentials.Set("password", input.Password)
+
+	encodedCredentials := strings.NewReader(credentials.Encode())
+
+	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials)
+	if err != nil {
+		return nil, err
+	}
+
+	responseData, err := decodeOauthResponse(response)
+	if err != nil {
+		return nil, err
+	}
+
+	return responseData, nil
+}
+
 // verifyAccessToken is used to introspect a token to determine the active state of the
 // OAuth 2.0 access token and to determine meta-information about this token.
 func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*TokenIntrospectionResponse, error) {

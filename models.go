@@ -1,6 +1,12 @@
 package authutils
 
-import "time"
+import (
+	"time"
+
+	validator "gopkg.in/go-playground/validator.v9"
+)
+
+var v = validator.New()
 
 // OAUTHResponse defines the object returned when a user successfully logs in
 type OAUTHResponse struct {
@@ -65,4 +71,20 @@ type CreateUserResponse struct {
 	BusinessPartner    string        `json:"business_partner"`
 	LastLogin          time.Time     `json:"last_login"`
 	UserRoles          []interface{} `json:"user_roles"`
+}
+
+// LoginUserPayload defines the object passed when a user logs in
+type LoginUserPayload struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required"`
+}
+
+// Validate ensures that the input passes validation checks
+func (s *LoginUserPayload) Validate() error {
+	err := v.Struct(s)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
