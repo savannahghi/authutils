@@ -17,6 +17,19 @@ type OAUTHResponse struct {
 	TokenType    string `json:"token_type"`
 }
 
+// MeResponse defines the object returned when a user's existence is validated on the authserver
+type MeResponse struct {
+	ID          int      `json:"id"`
+	GUID        string   `json:"guid"`
+	Email       string   `json:"email"`
+	FirstName   string   `json:"first_name"`
+	LastName    string   `json:"last_name"`
+	OtherNames  string   `json:"other_names"`
+	IsStaff     bool     `json:"is_staff"`
+	IsActive    bool     `json:"is_active"`
+	Permissions []string `json:"permissions"`
+}
+
 // LoginPayload defines the payload passed when logging in to slade 360 auth server
 type LoginPayload struct {
 	GrantType    string `json:"grant_type"`
