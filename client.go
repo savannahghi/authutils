@@ -104,7 +104,7 @@ func (c *Client) Authenticate() (*OAUTHResponse, error) {
 // CreateUser creates a user on slade360 auth server
 func (c *Client) CreateUser(ctx context.Context, input *CreateUserPayload) (*CreateUserResponse, error) {
 	createUserEndpoint := fmt.Sprintf("%s/v1/user/user_roles/", c.configurations.AuthServerEndpoint)
-	response, err := c.makeRequest(ctx, http.MethodPost, createUserEndpoint, input, "application/json", true)
+	response, err := c.makeRequest(ctx, http.MethodPost, createUserEndpoint, input, "application/json", true, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -190,6 +190,37 @@ func (c *Client) LoginUser(ctx context.Context, input *LoginUserPayload) (*OAUTH
 	return responseData, nil
 }
 
+// ValidateUser validates whether a user exists on the authserver
+func (c *Client) ValidateUser(ctx context.Context, authTokens *OAUTHResponse) (*MeResponse, error) {
+	meURL := fmt.Sprintf("%s/v1/user/me/", c.configurations.AuthServerEndpoint)
+
+	resp, err := c.makeRequest(ctx, http.MethodGet, meURL, nil, "application/json", true, authTokens)
+	if err != nil {
+		return nil, err
+	}
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		msg := fmt.Sprintf(
+			"an error occurred while processing your request. detail: %v",
+			string(data),
+		)
+		return nil, fmt.Errorf(msg)
+	}
+
+	var responseData MeResponse
+	err = json.Unmarshal(data, &responseData)
+	if err != nil {
+		return nil, err
+	}
+
+	return &responseData, nil
+}
+
 // verifyAccessToken is used to introspect a token to determine the active state of the
 // OAuth 2.0 access token and to determine meta-information about this token.
 func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*TokenIntrospectionResponse, error) {
@@ -207,7 +238,7 @@ func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*To
 		Token:     accessToken,
 	}
 
-	response, err := c.makeRequest(ctx, http.MethodPost, introspectionURL, payload, "application/json", false)
+	response, err := c.makeRequest(ctx, http.MethodPost, introspectionURL, payload, "application/json", false, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -255,6 +286,7 @@ func (c *Client) makeRequest(
 	body interface{},
 	contentType string,
 	isAuthenticated bool,
+	loginCreds *OAUTHResponse,
 ) (*http.Response, error) {
 	client := http.Client{}
 
@@ -270,9 +302,11 @@ func (c *Client) makeRequest(
 	}
 
 	if isAuthenticated {
-		loginCreds, err := c.Authenticate()
-		if err != nil {
-			return nil, err
+		if loginCreds == nil {
+			loginCreds, err = c.Authenticate()
+			if err != nil {
+				return nil, err
+			}
 		}
 		token := fmt.Sprintf("Bearer %s", loginCreds.AccessToken)
 
