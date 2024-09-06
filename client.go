@@ -190,6 +190,39 @@ func (c *Client) LoginUser(ctx context.Context, input *LoginUserPayload) (*OAUTH
 	return responseData, nil
 }
 
+// ResetPassword is used to reset a user's password on AuthServer
+func (c *Client) ResetPassword(ctx context.Context, payload *PasswordResetPayload) (*PasswordResetResponse, error) {
+	url := fmt.Sprintf("%s/accounts/password/reset/", c.configurations.AuthServerEndpoint)
+
+	resp, err := c.makeRequest(ctx, http.MethodPost, url, &payload, "application/json", true, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	defer resp.Body.Close()
+
+	respData, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, err
+	}
+
+	if resp.StatusCode != 200 {
+		msg := fmt.Sprintf(
+			"unable to send password reset instructions. Details: %v",
+			string(respData),
+		)
+		return nil, fmt.Errorf(msg)
+	}
+
+	var message PasswordResetResponse
+	err = json.Unmarshal(respData, &message)
+	if err != nil {
+		return nil, err
+	}
+
+	return &message, nil
+}
+
 // ValidateUser validates whether a user exists on the authserver
 func (c *Client) ValidateUser(ctx context.Context, authTokens *OAUTHResponse) (*MeResponse, error) {
 	meURL := fmt.Sprintf("%s/v1/user/me/", c.configurations.AuthServerEndpoint)
