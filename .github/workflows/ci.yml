@@ -21,7 +21,7 @@ jobs:
       - name: Run lint
         uses: golangci/golangci-lint-action@v3
         with:
-            version: latest
+            version: v1.57
 
       - name: Install Go dependencies
         run: |
@@ -30,6 +30,7 @@ jobs:
           go get github.com/ory/go-acc@latest
           go install github.com/ory/go-acc@latest
           go install github.com/axw/gocov/gocov@latest
+          go get github.com/savannahghi/firebasetools@v0.0.19
 
       - name: Run test
         run: |
