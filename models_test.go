@@ -59,3 +59,46 @@ func TestLoginUserPayload_Validate(t *testing.T) {
 		})
 	}
 }
+
+func TestResetPasswordPayload_Validate(t *testing.T) {
+	type args struct {
+		payload PasswordResetPayload
+	}
+
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		{
+			name: "Happy case: valid payload",
+			args: args{
+				payload: PasswordResetPayload{
+					Email:   "testuser@example.com",
+					Variant: "UzaziSalamaProd",
+					Origin:  "https://localhost:test.com",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "Sad case: invalid email",
+			args: args{
+				payload: PasswordResetPayload{
+					Email:   "testuserexample",
+					Variant: "UzaziSalamaProd",
+					Origin:  "https://localhost:test.com",
+				},
+			},
+			wantErr: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			p := tt.args.payload
+			if err := p.Validate(); (err != nil) != tt.wantErr {
+				t.Errorf("PasswordResetPayload.Validate() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}

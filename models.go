@@ -88,9 +88,9 @@ type CreateUserResponse struct {
 
 // PassworResetHeaders defines the object needed when making a password reset request
 type PasswordResetPayload struct {
-	Origin  string `json:"origin"`
-	Variant string `json:"variant"`
-	Email   string `json:"email"`
+	Origin  string `json:"origin" validate:"required"`
+	Variant string `json:"variant" validate:"required"`
+	Email   string `json:"email" validate:"required,email"`
 }
 
 // ResetPasswordResponse defines return the json object returned when password reset instruction has been sent
@@ -111,5 +111,14 @@ func (s *LoginUserPayload) Validate() error {
 		return err
 	}
 
+	return nil
+}
+
+// Validate ensures that the reset password payload passes the validation checks
+func (p *PasswordResetPayload) Validate() error {
+	err := v.Struct(p)
+	if err != nil {
+		return err
+	}
 	return nil
 }

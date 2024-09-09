@@ -192,6 +192,11 @@ func (c *Client) LoginUser(ctx context.Context, input *LoginUserPayload) (*OAUTH
 
 // ResetPassword is used to reset a user's password on AuthServer
 func (c *Client) ResetPassword(ctx context.Context, payload *PasswordResetPayload) (*PasswordResetResponse, error) {
+	err := payload.Validate()
+	if err != nil {
+		return nil, err
+	}
+
 	url := fmt.Sprintf("%s/accounts/password/reset/", c.configurations.AuthServerEndpoint)
 
 	resp, err := c.makeRequest(ctx, http.MethodPost, url, &payload, "application/json", true, nil)
