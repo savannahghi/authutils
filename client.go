@@ -199,7 +199,7 @@ func (c *Client) ResetPassword(ctx context.Context, payload *PasswordResetPayloa
 
 	url := fmt.Sprintf("%s/accounts/password/reset/", c.configurations.AuthServerEndpoint)
 
-	resp, err := c.makeRequest(ctx, http.MethodPost, url, &payload, "application/json", true, nil)
+	resp, err := c.makeRequest(ctx, http.MethodPost, url, &payload, "application/json", false, nil)
 	if err != nil {
 		return nil, err
 	}
