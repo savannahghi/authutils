@@ -86,11 +86,16 @@ type CreateUserResponse struct {
 	UserRoles          []interface{} `json:"user_roles"`
 }
 
-// PassworResetHeaders defines the object needed when making a password reset request
+// PasswordResetPayload defines the object needed when making a password reset request
 type PasswordResetPayload struct {
 	Origin  string `json:"origin" validate:"required"`
 	Variant string `json:"variant" validate:"required"`
 	Email   string `json:"email" validate:"required,email"`
+}
+
+// EmailResetPayload defines object needed when making a password request
+type EmailResetPayload struct {
+	Email string `json:"email"`
 }
 
 // ResetPasswordResponse defines return the json object returned when password reset instruction has been sent

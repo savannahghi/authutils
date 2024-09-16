@@ -104,7 +104,7 @@ func (c *Client) Authenticate() (*OAUTHResponse, error) {
 // CreateUser creates a user on slade360 auth server
 func (c *Client) CreateUser(ctx context.Context, input *CreateUserPayload) (*CreateUserResponse, error) {
 	createUserEndpoint := fmt.Sprintf("%s/v1/user/user_roles/", c.configurations.AuthServerEndpoint)
-	response, err := c.makeRequest(ctx, http.MethodPost, createUserEndpoint, input, "application/json", true, nil)
+	response, err := c.makeRequest(ctx, http.MethodPost, createUserEndpoint, input, "application/json", true, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,16 @@ func (c *Client) ResetPassword(ctx context.Context, payload *PasswordResetPayloa
 
 	url := fmt.Sprintf("%s/accounts/password/reset/", c.configurations.AuthServerEndpoint)
 
-	resp, err := c.makeRequest(ctx, http.MethodPost, url, &payload, "application/json", false, nil)
+	extraHeaders := map[string]string{
+		"origin":    payload.Origin,
+		"X-Variant": payload.Variant,
+	}
+
+	email := EmailResetPayload{
+		Email: payload.Email,
+	}
+
+	resp, err := c.makeRequest(ctx, http.MethodPost, url, email, "application/json", false, nil, extraHeaders)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +241,7 @@ func (c *Client) ResetPassword(ctx context.Context, payload *PasswordResetPayloa
 func (c *Client) ValidateUser(ctx context.Context, authTokens *OAUTHResponse) (*MeResponse, error) {
 	meURL := fmt.Sprintf("%s/v1/user/me/", c.configurations.AuthServerEndpoint)
 
-	resp, err := c.makeRequest(ctx, http.MethodGet, meURL, nil, "application/json", true, authTokens)
+	resp, err := c.makeRequest(ctx, http.MethodGet, meURL, nil, "application/json", true, authTokens, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -276,7 +285,7 @@ func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*To
 		Token:     accessToken,
 	}
 
-	response, err := c.makeRequest(ctx, http.MethodPost, introspectionURL, payload, "application/json", false, nil)
+	response, err := c.makeRequest(ctx, http.MethodPost, introspectionURL, payload, "application/json", false, nil, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -325,6 +334,7 @@ func (c *Client) makeRequest(
 	contentType string,
 	isAuthenticated bool,
 	loginCreds *OAUTHResponse,
+	extraHeaders map[string]string,
 ) (*http.Response, error) {
 	client := http.Client{}
 
@@ -352,6 +362,12 @@ func (c *Client) makeRequest(
 	}
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", contentType)
+
+	if extraHeaders != nil {
+		for header, value := range extraHeaders {
+			req.Header.Set(header, value)
+		}
+	}
 
 	command, _ := http2curl.GetCurlCommand(req)
 	fmt.Println(command)
