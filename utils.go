@@ -3,6 +3,7 @@ package authutils
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -53,7 +54,7 @@ func decodeOauthResponse(response *http.Response) (*OAUTHResponse, error) {
 			"an error occurred while processing your request. detail: %v",
 			string(data),
 		)
-		return nil, fmt.Errorf(msg)
+		return nil, errors.New(msg)
 	}
 
 	var responseData OAUTHResponse

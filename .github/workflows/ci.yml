@@ -19,9 +19,9 @@ jobs:
           go-version: ${{ matrix.go-version }}
 
       - name: Run lint
-        uses: golangci/golangci-lint-action@v3
+        uses: golangci/golangci-lint-action@v7
         with:
-            version: v1.57
+            version: v2.2.0
 
       - name: Install Go dependencies
         run: |

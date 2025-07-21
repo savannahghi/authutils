@@ -1,41 +1,48 @@
-# Options for analysis running.
-run:
-  linters:
-    disable-all: true
-    enable:
-      - deadcode
-      - errcheck
-      - gosimple
-      - govet
-      - ineffassign
-      - staticcheck
-      - structcheck
-      - typecheck
-      - unused
-      - varcheck
-      - asciicheck
-      - bodyclose
-      - dogsled
-      - exhaustive
-      - exportloopref
-      - gocognit
-      - goconst
-      - gofmt
-      - goheader
-      - goimports
-      - gosec
-      - misspell
-      - nakedret
-      - nestif
-      - noctx
-      - rowserrcheck
-      - sqlclosecheck
-      - unconvert
-      - unparam
-      - whitespace
-      - gocyclo
-      - golint
-
-  linters-settings:
-    staticcheck:
-      checks: ["all"]
+version: "2"
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - asciicheck
+    - bodyclose
+    - dogsled
+    - exhaustive
+    - gocognit
+    - goconst
+    - goheader
+    - gosec
+    - misspell
+    - nakedret
+    - nestif
+    - noctx
+    - rowserrcheck
+    - sqlclosecheck
+    - unconvert
+    - unparam
+    - whitespace
+    - gocyclo
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$

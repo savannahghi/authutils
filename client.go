@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -88,10 +89,11 @@ func (c *Client) Authenticate() (*OAUTHResponse, error) {
 
 	encodedCredentials := strings.NewReader(credentials.Encode())
 
-	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials)
+	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials) //nolint:noctx
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
 
 	responseData, err := decodeOauthResponse(response)
 	if err != nil {
@@ -108,6 +110,7 @@ func (c *Client) CreateUser(ctx context.Context, input *CreateUserPayload) (*Cre
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
 
 	data, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -119,7 +122,7 @@ func (c *Client) CreateUser(ctx context.Context, input *CreateUserPayload) (*Cre
 			"error from create user endpoint, status %d and error: %s",
 			response.StatusCode, string(data),
 		)
-		return nil, fmt.Errorf(msg)
+		return nil, errors.New(msg)
 	}
 
 	var dataResponse *CreateUserResponse
@@ -146,10 +149,11 @@ func (c *Client) RefreshToken(ctx context.Context, refreshToken string) (*OAUTHR
 
 	encodedCredentials := strings.NewReader(credentials.Encode())
 
-	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials)
+	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials) //nolint:noctx
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
 
 	responseData, err := decodeOauthResponse(response)
 	if err != nil {
@@ -177,10 +181,11 @@ func (c *Client) LoginUser(ctx context.Context, input *LoginUserPayload) (*OAUTH
 
 	encodedCredentials := strings.NewReader(credentials.Encode())
 
-	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials)
+	response, err := c.client.Post(apiTokenURL, "application/x-www-form-urlencoded", encodedCredentials) //nolint:noctx
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
 
 	responseData, err := decodeOauthResponse(response)
 	if err != nil {
@@ -225,7 +230,7 @@ func (c *Client) ResetPassword(ctx context.Context, payload *PasswordResetPayloa
 			"unable to send password reset instructions. Details: %v",
 			string(respData),
 		)
-		return nil, fmt.Errorf(msg)
+		return nil, errors.New(msg)
 	}
 
 	var message PasswordResetResponse
@@ -245,6 +250,7 @@ func (c *Client) ValidateUser(ctx context.Context, authTokens *OAUTHResponse) (*
 	if err != nil {
 		return nil, err
 	}
+	defer resp.Body.Close()
 
 	data, err := io.ReadAll(resp.Body)
 	if err != nil {
@@ -256,7 +262,7 @@ func (c *Client) ValidateUser(ctx context.Context, authTokens *OAUTHResponse) (*
 			"an error occurred while processing your request. detail: %v",
 			string(data),
 		)
-		return nil, fmt.Errorf(msg)
+		return nil, errors.New(msg)
 	}
 
 	var responseData MeResponse
@@ -289,6 +295,7 @@ func (c *Client) verifyAccessToken(ctx context.Context, accessToken string) (*To
 	if err != nil {
 		return nil, err
 	}
+	defer response.Body.Close()
 
 	resp, err := io.ReadAll(response.Body)
 	if err != nil {
@@ -331,7 +338,7 @@ func (c *Client) makeRequest(
 	method string,
 	path string,
 	body interface{},
-	contentType string,
+	contentType string, //nolint:unparam
 	isAuthenticated bool,
 	loginCreds *OAUTHResponse,
 	extraHeaders map[string]string,
@@ -363,10 +370,8 @@ func (c *Client) makeRequest(
 	req.Header.Set("Accept", "application/json")
 	req.Header.Set("Content-Type", contentType)
 
-	if extraHeaders != nil {
-		for header, value := range extraHeaders {
-			req.Header.Set(header, value)
-		}
+	for header, value := range extraHeaders {
+		req.Header.Set(header, value)
 	}
 
 	command, _ := http2curl.GetCurlCommand(req)
